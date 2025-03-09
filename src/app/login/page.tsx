@@ -1,19 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { useAuthContext } from "@/contexts/AuthContext";
-import { useAuth } from "@/hooks";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const { checkAuth } = useAuthContext();
-  const auth = useAuth();
+  const authContext = useAuthContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,13 +17,8 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await auth.login(email, password);
-
-      // Check authentication status and update context
-      await checkAuth();
-
+      await authContext.login(email, password);
       // Redirect to dashboard
-      router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to login");
     } finally {

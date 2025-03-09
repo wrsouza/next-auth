@@ -1,4 +1,4 @@
-import { api } from "@/services/api";
+import { api } from "@/services";
 import { Permission } from "@/types";
 
 export function usePermissions() {

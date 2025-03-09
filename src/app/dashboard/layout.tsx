@@ -1,12 +1,12 @@
 "use client";
 
-import { useAuthContext } from "@/contexts/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
 import { AiOutlineHome, AiOutlineTeam } from "react-icons/ai";
 import { MdOutlineSecurity, MdOutlineAdminPanelSettings } from "react-icons/md";
 import { IoLogOutOutline } from "react-icons/io5";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 export default function DashboardLayout({
   children,

@@ -1,6 +1,5 @@
 "use client";
 
-import { useAuthContext } from "@/contexts/AuthContext";
 import {
   FaRegUser,
   FaRegEnvelope,
@@ -11,6 +10,7 @@ import {
   FaCrown,
   FaUserTag,
 } from "react-icons/fa";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 export default function DashboardPage() {
   const { user } = useAuthContext();

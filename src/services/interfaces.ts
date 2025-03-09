@@ -4,18 +4,22 @@ export interface ITokenService {
   removeToken(): void;
   isTokenValid(token: string): boolean;
   getTokenExpirationTime(token: string): number | null;
-  scheduleTokenRefresh(
-    token: string,
-    onRefresh: (newToken: string) => void
-  ): void;
+  refreshToken(token: string): Promise<void>;
+  scheduleTokenRefresh(token: string): void;
   clearRefreshSchedule(): void;
 }
 
 export interface IAuthService {
   login(email: string, password: string): Promise<void>;
-  checkAuth(onTokenRefresh: () => void): Promise<User>;
-  refreshToken(token: string): Promise<AuthResponse>;
   logout(): void;
+  getProfile(): Promise<User | null>;
+}
+
+export interface IApiService {
+  get<T>(endpoint: string, token?: string): Promise<T>;
+  post<T>(endpoint: string, data: unknown, token?: string): Promise<T>;
+  put<T>(endpoint: string, data: unknown, token?: string): Promise<T>;
+  delete<T>(endpoint: string, token?: string): Promise<T>;
 }
 
 export interface AuthResponse {

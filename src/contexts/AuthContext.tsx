@@ -10,12 +10,7 @@ import React, {
 } from "react";
 import { useRouter } from "next/navigation";
 import { User } from "@/types";
-import { ServiceFactory } from "@/services/factory";
-import { AuthResponse } from "@/services/interfaces";
-import { initializeServices } from "@/services/initialize";
-
-// Initialize services
-initializeServices();
+import { authService } from "../services";
 
 interface AuthContextState {
   user: User | null;
@@ -28,13 +23,21 @@ interface AuthContextActions {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
-  refreshToken: (token: string) => Promise<AuthResponse>;
   clearError: () => void;
 }
 
 interface AuthContextType extends AuthContextState, AuthContextActions {}
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: false,
+  error: null,
+  isAuthenticated: false,
+  login: async () => {},
+  logout: async () => {},
+  checkAuth: async () => {},
+  clearError: () => {},
+});
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthContextState>({
@@ -45,7 +48,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
 
   const router = useRouter();
-  const authService = useMemo(() => ServiceFactory.getAuthService(), []);
 
   const setError = useCallback((error: string | null) => {
     setState((prev) => ({ ...prev, error }));
@@ -55,13 +57,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
   }, [setError]);
 
-  const handleTokenRefresh = useCallback(() => {
-    checkAuth();
-  }, []);
-
   const checkAuth = useCallback(async () => {
     try {
-      const userData = await authService.checkAuth(handleTokenRefresh);
+      const userData = await authService.getProfile();
+      if (!userData) {
+        router.push("/login");
+        return;
+      }
       setState((prev) => ({
         ...prev,
         user: userData,
@@ -78,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading: false,
       }));
     }
-  }, [authService, handleTokenRefresh]);
+  }, [router]);
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -95,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }));
       }
     },
-    [authService, checkAuth, router]
+    [checkAuth, router]
   );
 
   const logout = useCallback(async () => {
@@ -116,14 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading: false,
       }));
     }
-  }, [authService, router]);
-
-  const refreshToken = useCallback(
-    async (token: string) => {
-      return authService.refreshToken(token);
-    },
-    [authService]
-  );
+  }, [router]);
 
   // Check authentication on mount
   useEffect(() => {
@@ -131,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       authService.logout();
     };
-  }, [authService, checkAuth]);
+  }, [checkAuth]);
 
   const contextValue = useMemo(
     () => ({
@@ -139,10 +134,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       logout,
       checkAuth,
-      refreshToken,
       clearError,
     }),
-    [state, login, logout, checkAuth, refreshToken, clearError]
+    [state, login, logout, checkAuth, clearError]
   );
 
   return (
@@ -151,9 +145,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useAuthContext() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuthContext must be used within an AuthProvider");
-  }
-  return context;
+  return useContext<AuthContextType>(AuthContext);
 }
